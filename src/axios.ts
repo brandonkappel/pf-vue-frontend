@@ -8,6 +8,9 @@ const axiosInstance: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL, // Replace with your base URL
   withCredentials: true
 });
+interface ErrorResponseData {
+  message: string; // Define other fields if necessary
+}
 
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -18,7 +21,6 @@ axiosInstance.interceptors.request.use(
       appStateStore.setLoading(true);
     }
     const token = authStore.token;
-    console.error('token:', token);
     if (token) {
       config.headers;
       config.headers.Authorization = `Bearer ${token}`; // Add Authorization header
@@ -43,7 +45,7 @@ axiosInstance.interceptors.response.use(
       return response;
     }
   },
-  (error: AxiosError) => {
+  (error: AxiosError<ErrorResponseData>) => {
     // Handle non-200 responses here
     const appStateStore = useAppStateStore();
     appStateStore.setLoading(false);
@@ -51,7 +53,8 @@ axiosInstance.interceptors.response.use(
       // Handle the error as needed, e.g., show a notification or redirect to an error page
       console.error(`Error: ${error.response.status} - ${error.response.statusText}`);
       // Optionally throw the error to be handled elsewhere
-      window.alert(error?.response?.data?.message);
+      const errorMessage = error.response.data?.message || 'An unexpected error occurred.';
+      window.alert(errorMessage);
       return Promise.reject(error);
     }
   }

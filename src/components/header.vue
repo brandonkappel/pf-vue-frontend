@@ -32,17 +32,17 @@ const workoutStore = useWorkoutStore()
 // Define which routes should show the back button or create button
 const showBackButton = computed(() => {
     // Show back button on certain pages
-    return ['workout'].includes(route.name);
+    return ['workout'].includes(route.name as string);
 });
 
 const showCreateButton = computed(() => {
     // Show create button on certain pages
-    return ['myWorkouts'].includes(route.name);
+    return ['myWorkouts'].includes(route.name as string);
 });
 
 const showEditButton = computed(() => {
     // Show create button on certain pages
-    return ['workout'].includes(route.name);
+    return ['workout'].includes(route.name as string);
 });
 
 const createWorkout = () => {

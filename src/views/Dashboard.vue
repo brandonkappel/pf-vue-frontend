@@ -88,7 +88,12 @@ const items = ref([
       // { label: 'Clients', icon: 'pi pi-users', badge: 2, },
       // { label: 'Admin', icon: 'pi pi-shield', },
       // { label: 'Settings', icon: 'pi pi-cog', },
-      { label: 'Logout', icon: 'pi pi-sign-out', to: '/login', command: () => authStore.logout() }
+      {
+        label: 'Logout', icon: 'pi pi-sign-out',
+        command: () => {
+          authStore.logout()
+        }
+      }
     ]
   },
   // { separator: true }

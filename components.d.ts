@@ -8,12 +8,9 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AutoComplete: typeof import('primevue/autocomplete')['default']
-    Avatar: typeof import('primevue/avatar')['default']
-    Badge: typeof import('primevue/badge')['default']
     Button: typeof import('primevue/button')['default']
     Card: typeof import('primevue/card')['default']
     Checkbox: typeof import('primevue/checkbox')['default']
-    CreateWorkout: typeof import('./src/components/createWorkout.vue')['default']
     CreateWorkoutDialog: typeof import('./src/components/createWorkoutDialog.vue')['default']
     DataView: typeof import('primevue/dataview')['default']
     DataViewList: typeof import('./src/components/dataViewList.vue')['default']
@@ -31,7 +28,6 @@ declare module 'vue' {
     InputOtp: typeof import('primevue/inputotp')['default']
     InputText: typeof import('primevue/inputtext')['default']
     Loader: typeof import('./src/components/loader.vue')['default']
-    Menu: typeof import('primevue/menu')['default']
     Menubar: typeof import('primevue/menubar')['default']
     Password: typeof import('primevue/password')['default']
     PasswordDialog: typeof import('./src/components/auth/passwordDialog.vue')['default']
@@ -41,14 +37,9 @@ declare module 'vue' {
     Select: typeof import('primevue/select')['default']
     SelectButton: typeof import('primevue/selectbutton')['default']
     SignupDialog: typeof import('./src/components/auth/signupDialog.vue')['default']
-    TableLayout: typeof import('./src/components/tableLayout.vue')['default']
     Textarea: typeof import('primevue/textarea')['default']
     TheWelcome: typeof import('./src/components/TheWelcome.vue')['default']
     WelcomeItem: typeof import('./src/components/WelcomeItem.vue')['default']
     WorkoutHolder: typeof import('./src/components/workoutHolder.vue')['default']
-  }
-  export interface ComponentCustomProperties {
-    Ripple: typeof import('primevue/ripple')['default']
-    StyleClass: typeof import('primevue/styleclass')['default']
   }
 }

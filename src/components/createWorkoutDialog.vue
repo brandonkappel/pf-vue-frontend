@@ -179,7 +179,7 @@ const typeChange = (index: number) => {
     if (items.value[index]) {
         items.value[index].reps = 0
         items.value[index].sets = 0
-        items.value[index].exercise = ''
+        items.value[index].exercise = { _id: '' }
         items.value[index].scoreType = ''
         items.value[index].description = ''
     }
