@@ -15,15 +15,6 @@ export default defineConfig({
       resolvers: [PrimeVueResolver()]
     })
   ],
-  server: {
-    proxy: {
-      '/api': {
-        target: 'https://api.progressionalfitness.com',
-        changeOrigin: true,
-        secure: false // Disable SSL verification for testing
-      }
-    }
-  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
