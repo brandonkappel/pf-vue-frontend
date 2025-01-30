@@ -40,8 +40,9 @@ axiosInstance.interceptors.response.use(
   (response: AxiosResponse<any, any>): any => {
     // If the response is 200, return the response as is
     const appStateStore = useAppStateStore();
-    appStateStore.setLoading(false);
     if (response.status === 200 || response.status === 201) {
+      appStateStore.setLoading(false);
+
       return response;
     }
   },

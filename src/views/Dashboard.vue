@@ -48,10 +48,11 @@
 
     <!-- Main Content Area with Router View -->
     <div class="flex-1 overflow-auto ">
-      <Loader v-if="appStateStore.isLoading" />
       <div class="px-4">
         <Header />
       </div>
+      <Loader v-if="appStateStore.isLoading" />
+
       <div class="p-4">
         <router-view />
       </div>
@@ -89,7 +90,7 @@ const items = ref([
       // { label: 'Admin', icon: 'pi pi-shield', },
       // { label: 'Settings', icon: 'pi pi-cog', },
       {
-        label: 'Logout', icon: 'pi pi-sign-out',
+        label: 'Logout', icon: 'pi pi-sign-out', to: '/login',
         command: () => {
           authStore.logout()
         }

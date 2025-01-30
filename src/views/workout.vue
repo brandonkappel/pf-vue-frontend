@@ -14,6 +14,7 @@ import { useAppStateStore } from '@/stores/appStateStore';
 import CreateWorkoutDialog from '@/components/createWorkoutDialog.vue';
 import WorkoutHolder from '@/components/workoutHolder.vue'
 import { computed } from 'vue';
+import { onBeforeMount } from 'vue';
 
 const workoutStore = useWorkoutStore()
 const appStateStore = useAppStateStore()
@@ -24,7 +25,7 @@ const props = defineProps({
     }
 })
 
-onMounted(async () => {
+onBeforeMount(async () => {
     if (props.id) {
         await workoutStore.getWorkout(props.id)
         appStateStore.setHeaderTitle(workout.value.name)

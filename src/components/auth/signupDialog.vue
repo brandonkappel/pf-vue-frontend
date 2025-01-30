@@ -1,7 +1,7 @@
 <template>
     <Dialog :visible="authStore.isSignupDialogVisible" modal @update:visible="hideDialog" header="Create Account"
         :style="{ width: '35rem' }" pt:mask:class="backdrop-blur-sm">
-        <div v-if="authStore.user">
+        <div v-if="createAccount">
             <span class="text-surface-500 dark:text-surface-400 block mb-8"> Enter verification code</span>
             <div class="flex items-center gap-4 mb-4">
                 <label for="code" class="font-semibold w-24">Code</label>
@@ -61,7 +61,12 @@ const hideDialog = () => {
 };
 
 const setUpAccount = async () => {
-    await authStore.setUpUser()
+    const response = await authStore.setUpUser()
+
+    if (response === 'Email sent') {
+        console.log(response)
+        createAccount.value = true
+    }
 }
 
 const signUp = () => {

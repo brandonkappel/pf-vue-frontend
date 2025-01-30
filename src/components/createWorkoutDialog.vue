@@ -13,7 +13,7 @@
             </FloatLabel>
         </div>
         <hr>
-        <div class="my-3 relative" v-for="(item, index) in items" :key="index">
+        <div class="my-3 relative" v-for="(item, index) in workoutItems" :key="index">
             <div class="mb-3 flex justify-between gap-3 flex-wrap">
                 <div class="w-full md:w-56" v-if="!item.readOnly">
                     <FloatLabel class="w-full" variant="in">
@@ -148,7 +148,8 @@ const newWorkout = ref({} as Workout)
 const exercises = ref<any>([])
 const workoutItem = ref({} as WorkoutItem)
 // const items = ref([] as WorkoutItem[])
-const items = ref<WorkoutItemWithReadOnly[]>([]);
+const workoutItems = ref<WorkoutItemWithReadOnly[]>([]);
+console.error('items:', workoutItems)
 
 
 if (props.workout) {
@@ -156,6 +157,7 @@ if (props.workout) {
 }
 
 const search = async (event: any) => {
+    console.error('searching')
     if (event.query) {
         setTimeout(async () => {
             exercises.value = await workoutStore.getExercises(event.query)
@@ -163,25 +165,25 @@ const search = async (event: any) => {
     } else {
         exercises.value = await workoutStore.getRecentlySearched()
     }
-
 }
 
 const addItem = () => {
-    items.value.forEach(item => {
+    workoutItems.value.forEach(item => {
         item.readOnly = true;
     });
-    const item = {} as WorkoutItemWithReadOnly
-    item.readOnly = false
-    items.value.push(item)
+    const newWorkoutItem = {} as WorkoutItemWithReadOnly
+    newWorkoutItem.readOnly = false
+    workoutItems.value.push(newWorkoutItem)
 }
 
 const typeChange = (index: number) => {
-    if (items.value[index]) {
-        items.value[index].reps = 0
-        items.value[index].sets = 0
-        items.value[index].exercise = { _id: '' }
-        items.value[index].scoreType = ''
-        items.value[index].description = ''
+    console.error(workoutItems)
+    if (workoutItems.value[index]) {
+        workoutItems.value[index].reps = 0
+        workoutItems.value[index].sets = 0
+        workoutItems.value[index].exercise = {}
+        workoutItems.value[index].scoreType = ''
+        workoutItems.value[index].description = ''
     }
 }
 const onSelectedExercise = (exercise: any) => {
@@ -191,19 +193,19 @@ const onSelectedExercise = (exercise: any) => {
 
 const toggleEdit = (index: number) => {
     // Toggle the readOnly property for the specific item
-    items.value[index].readOnly = !items.value[index].readOnly;
+    workoutItems.value[index].readOnly = !workoutItems.value[index].readOnly;
 };
 
 const removeExercise = (index: number) => {
-    items.value.splice(index, 1);
+    workoutItems.value.splice(index, 1);
 }
 const generateWorkout = async (index: number) => {
-    items.value[index].description = await workoutStore.generateWorkout(items.value[index].scoreType, selectedEquipment.value, selectedDuration.value)
+    workoutItems.value[index].description = await workoutStore.generateWorkout(workoutItems.value[index].scoreType, selectedEquipment.value, selectedDuration.value)
 }
 
 
 const hideDialog = () => {
-    items.value = []
+    workoutItems.value = []
     workoutStore.showCreateWorkoutDialog()
     // emit('update:visible', false);
 };
@@ -213,20 +215,17 @@ const createWorkout = () => {
     const workout = {
         name: newWorkout.value.name,
         date: newWorkout.value.date,
-        workoutItems: items.value.filter((item) => item.type).map(({ readOnly, ...item }) => ({
+        workoutItems: workoutItems.value.filter((item) => item.type).map(({ readOnly, ...item }) => ({
             ...item,
             exercise: item.exercise ? item.exercise._id : null, // Extract the _id from the exercise object
         })),
     };
+    console.log(workout)
     workoutStore.createWorkout(workout)
 
 
 
 }
 
-// const signup = () => {
-//     // Handle signup logic
-//     authStore.createUser({ code: code.value, firstName: firstName.value, lastName: lastName.value, password: password.value })
-// };
 
 </script>

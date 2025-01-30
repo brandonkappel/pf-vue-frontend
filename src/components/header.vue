@@ -5,7 +5,7 @@
     </div> -->
     <Card>
         <template #title>
-            <div class="flex justify-between">
+            <div class="flex justify-between" v-if="!appStateStore.isLoading">
                 <Button v-if="showBackButton" @click="goBack" label="Back" size="small"></Button>
                 <div v-if="!appStateStore.isLoading">
                     {{ appStateStore.headerTitle }}

@@ -3,9 +3,7 @@ export interface WorkoutItem {
   description: string;
   comments: string;
   clientComments: [];
-  exercise: {
-    _id: string;
-  };
+  exercise: {};
   customExercise: string; // For custom exercises typed in by the user
   sets: number;
   reps: number;
