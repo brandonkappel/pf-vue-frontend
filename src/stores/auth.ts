@@ -44,15 +44,16 @@ export const useAuthStore = defineStore('auth', {
         const response = await axiosInstance.post('/auth/send-code', { email: this.userEmail });
         console.log(response);
         this.user = response.data.user;
+        return response.data.message;
       } catch (error) {}
     },
 
     async createUser(credentials: any) {
-      credentials.email = this.user.email;
+      credentials.email = this.userEmail;
       try {
         const response = await axiosInstance.post('/auth/create-user', credentials);
         this.showSignupDialog();
-        router.push({ name: 'dashboard' });
+        router.push({ name: 'myWorkouts' });
         this.configureUser(response.data);
       } catch (error) {}
     },
