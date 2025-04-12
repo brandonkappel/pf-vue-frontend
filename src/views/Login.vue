@@ -2,7 +2,7 @@
   <form @submit.prevent="handleLogin">
     <Card class="m-4">
       <template #title>
-        <h1 class="text-4xl text-center pt-4">Progressional Fitness</h1>
+        <h1 class="text-4xl text-center pt-4">New App</h1>
       </template>
       <template #subtitle>
         <p class="text-center pb-4">Login/Sign-up</p>

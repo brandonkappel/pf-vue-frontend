@@ -81,13 +81,6 @@ const items = ref([
   {
     items: [
       { label: 'Home', icon: 'pi pi-home', to: '/home' },
-      { label: 'My Workouts', icon: 'pi pi-bolt', to: '/my-workouts' },
-      { label: 'Programs', icon: 'pi pi-bolt', to: '/programs' },
-      // { label: 'Favorites', icon: 'pi pi-heart', },
-      // { label: 'Programs', icon: 'pi pi-list-check', },
-      // { label: 'Clients', icon: 'pi pi-users', badge: 2, },
-      // { label: 'Admin', icon: 'pi pi-shield', },
-      // { label: 'Settings', icon: 'pi pi-cog', },
       {
         label: 'Logout', icon: 'pi pi-sign-out',
         command: () => {

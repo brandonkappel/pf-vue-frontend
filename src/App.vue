@@ -10,7 +10,6 @@ import { useRouter } from 'vue-router';
 const authStore = useAuthStore();
 const router = useRouter();
 
-authStore.autoAuthUser()
 if (authStore.isAuthenticated) {
   // router.push({ name: 'dashboard' })
 } else {

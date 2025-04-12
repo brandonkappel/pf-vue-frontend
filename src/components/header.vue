@@ -20,14 +20,12 @@
 
 <script setup lang="ts">
 import { useAppStateStore } from '@/stores/appStateStore';
-import { useWorkoutStore } from '@/stores/workoutStore';
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const appStateStore = useAppStateStore()
 const route = useRoute();
 const router = useRouter();
-const workoutStore = useWorkoutStore()
 
 // Define which routes should show the back button or create button
 const showBackButton = computed(() => {

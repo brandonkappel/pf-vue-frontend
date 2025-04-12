@@ -2,9 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import HomeView from '../views/Home.vue';
 import Login from '../views/Login.vue';
-import myWorkouts from '../views/myWorkouts.vue';
-import Workout from '../views/workout.vue';
-import Programs from '../views/programs.vue';
 import { useAppStateStore } from '@/stores/appStateStore';
 
 const router = createRouter({
@@ -26,40 +23,6 @@ const router = createRouter({
           name: 'home',
           component: () => import('../views/Home.vue'),
           meta: { title: 'Home' }
-        },
-        {
-          path: '/my-workouts',
-          name: 'myWorkouts',
-          component: () => import('../views/myWorkouts.vue'),
-          meta: { title: 'My Workouts' }
-        },
-        {
-          path: '/workout/:id',
-          name: 'workout',
-          component: () => import('../views/workout.vue'),
-          props: true
-        },
-        {
-          path: '/programs',
-          name: 'programs',
-          // component: Programs,
-          component: () => import('../views/programs.vue'),
-          meta: { title: 'Programs' }
-        },
-        {
-          path: '/programs/:id',
-          name: 'program',
-          // component: Programs,
-          component: () => import('../views/program.vue'),
-          props: true
-        },
-        {
-          path: '/about',
-          name: 'about',
-          // route level code-splitting
-          // this generates a separate chunk (About.[hash].js) for this route
-          // which is lazy-loaded when the route is visited.
-          component: () => import('../views/AboutView.vue')
         }
       ]
     }

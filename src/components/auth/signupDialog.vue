@@ -61,7 +61,7 @@ const hideDialog = () => {
 };
 
 const setUpAccount = async () => {
-    await authStore.setUpUser()
+    await authStore.sendCode()
 }
 
 const signUp = () => {

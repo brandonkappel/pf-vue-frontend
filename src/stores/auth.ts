@@ -19,25 +19,27 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async findUser(email: string) {
       this.userEmail = email;
-      try {
-        const response = await axiosInstance.post('/auth/find-user', { email: email });
-        console.log(response);
-        this.user = response.data.user;
-        if (this.user) {
-          if (this.user.active) {
-            this.showPasswordDialog();
-          } else {
-            // If user isn't active
-            this.showSignupDialog();
-          }
-        } else {
-          // If no user is found
-          this.showSignupDialog();
-        }
-      } catch (error) {}
+      this.showPasswordDialog();
+
+      // try {
+      //   const response = await axiosInstance.post('/auth/find-user', { email: email });
+      //   console.log(response);
+      //   this.user = response.data.user;
+      //   if (this.user) {
+      //     if (this.user.active) {
+      //       this.showPasswordDialog();
+      //     } else {
+      //       // If user isn't active
+      //       this.showSignupDialog();
+      //     }
+      //   } else {
+      //     // If no user is found
+      //     this.showSignupDialog();
+      //   }
+      // } catch (error) {}
     },
 
-    async setUpUser() {
+    async sendCode() {
       try {
         const response = await axiosInstance.post('/auth/send-code', { email: this.userEmail });
         console.log(response);
@@ -54,29 +56,31 @@ export const useAuthStore = defineStore('auth', {
         this.configureUser(response.data);
       } catch (error) {}
     },
+
     async login(password: string) {
       const credentials = { email: this.user.email, password };
-      try {
-        const response = await axiosInstance.post('/auth/login', credentials);
-        this.showPasswordDialog();
-        this.configureUser(response.data);
-        router.push({ name: 'myWorkouts' });
-        // this.token = response.data.token
-      } catch (error) {
-        return error;
-      }
+      // try {
+      //   const response = await axiosInstance.post('/auth/login', credentials);
+      this.showPasswordDialog();
+      // this.configureUser(response.data);
+      this.configureUser('');
+      router.push({ name: 'home' });
+      //   // this.token = response.data.token
+      // } catch (error) {
+      //   return error;
+      // }
     },
 
     configureUser(userDetails: any) {
-      this.user = userDetails.user;
-      this.token = userDetails.token;
-      this.userId = this.user._id;
+      // this.user = userDetails.user;
+      // this.token = userDetails.token;
+      // this.userId = this.user._id;
       this.isAuthenticated = true;
-      const expiresInDuration = userDetails.expiresIn;
-      this.setAuthTimer(expiresInDuration);
-      const now = new Date();
-      const expirationDate = new Date(now.getTime() + expiresInDuration * 1000);
-      this.saveAuthData(userDetails.token, expirationDate, this.user._id, this.user.role);
+      // const expiresInDuration = userDetails.expiresIn;
+      // this.setAuthTimer(expiresInDuration);
+      // const now = new Date();
+      // const expirationDate = new Date(now.getTime() + expiresInDuration * 1000);
+      // this.saveAuthData(userDetails.token, expirationDate, this.user._id, this.user.role);
     },
 
     setAuthTimer(duration: number) {
