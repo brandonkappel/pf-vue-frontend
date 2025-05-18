@@ -4,11 +4,11 @@
         :breakpoints="{ '1199px': '85vw', '575px': '90vw' }" pt:mask:class="backdrop-blur-sm">
         <div class="flex gap-3 mb-3 flex-wrap">
             <FloatLabel variant="in">
-                <InputText id="name" v-model="newWorkout.name" autocomplete="off" />
+                <InputText id="name" v-model="workout.name" autocomplete="off" />
                 <label for="name">Workout Name</label>
             </FloatLabel>
             <FloatLabel variant="in">
-                <DatePicker v-model="newWorkout.date" inputId="date" showIcon iconDisplay="input" />
+                <DatePicker v-model="workout.date" inputId="date" showIcon iconDisplay="input" />
                 <label for="date">Date</label>
             </FloatLabel>
         </div>
@@ -33,7 +33,7 @@
                     <div class="flex flex-wrap gap-2">
                         <span>Equipment Available:</span>
                         <div v-for="(equipment, index) in availableEquipment" :key="index">
-                            <Checkbox v-model="selectedEquipment" :disabled="item.readOnly" :inputId="equipment"
+                            <Checkbox v-model="item.selectedEquipment" :disabled="item.readOnly" :inputId="equipment"
                                 name="dynamic" :value="equipment" />
                             <label :for="equipment" class="ml-2">{{ equipment }}</label>
                         </div>
@@ -49,7 +49,7 @@
                     <div class="flex flex-wrap gap-2">
                         <span>Duration:</span>
                         <div v-for="(duration, index) in durations" :key="index">
-                            <RadioButton v-model="selectedDuration" :disabled="item.readOnly" :inputId="duration"
+                            <RadioButton v-model="item.selectedDuration" :disabled="item.readOnly" :inputId="duration"
                                 name="dynamic" :value="duration" />
                             <label :for="duration" class="ml-2">{{ duration }}</label>
                         </div>
@@ -113,17 +113,19 @@
         </div>
         <Button class="my-3" label="Add Workout Item" @click="addItem"></Button>
         <div class="fixed bottom-0 right-5">
-            <Button class="my-3 w-full" label="Create Workout" @click="createWorkout"></Button>
+            <Button class="my-3 w-full" :label="isNew ? 'Create Workout' : 'Edit Workout'" @click="createWorkout"></Button>
         </div>
 
     </Dialog>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import * as yup from 'yup';
 import { useWorkoutStore } from '@/stores/workoutStore'
 import { computed } from 'vue';
 import type { Workout } from '@/models/workout';
 import type { WorkoutItem } from '@/models/workoutItem';
+import { useForm } from 'vee-validate';
 
 const workoutStore = useWorkoutStore()
 
@@ -133,28 +135,59 @@ const props = defineProps({
         required: false
     }
 });
+
+const schema = yup.object({
+    workoutName: yup.string().required('Workout Name is required'),
+    date: yup.date().required('Date is required'),
+});
+// Setup form with Vee Validate
+const { defineField, handleSubmit, errors } = useForm({
+    validationSchema: schema,
+});
+
+
 interface WorkoutItemWithReadOnly extends WorkoutItem {
+    selectedDuration: ''
+    selectedEquipment: []
     readOnly: boolean;
 }
 const availableEquipment = ref(['Dumbbells', 'Barbell', 'Resistance Bands', 'Kettlebell', 'Bodyweight'])
-const selectedEquipment = ref([])
 const metconTypes = ref(['Custom Workout', 'Generated Workout'])
-const metconType = ref('Custom Workout')
 const workoutTypes = ref(['Strength', 'Metcon'])
 const scoreTypes = ref(['For Time', 'AMRAP'])
 const durations = ref(['Short', 'Medium', 'Long'])
+
+const selectedEquipment = ref([])
+const metconType = ref('Custom Workout')
 const selectedDuration = ref('')
-const newWorkout = ref({} as Workout)
+const workout = ref({} as Workout)
 const exercises = ref<any>([])
-const workoutItem = ref({} as WorkoutItem)
-// const items = ref([] as WorkoutItem[])
 const workoutItems = ref<WorkoutItemWithReadOnly[]>([]);
-console.error('items:', workoutItems)
+const isNew = ref(false)
+const emit = defineEmits(["workoutUpdated"]); // Declare event
 
 
-if (props.workout) {
-    const workout = computed(() => workoutStore.workout)
-}
+// 🎯 Watch `props.workout` to detect when editing
+watch(() => props.workout, (workoutToEdit: any) => {
+    if (workoutToEdit) {
+        console.error('edit:', workoutToEdit)
+        isNew.value = false;
+
+        // ✅ Create a copy instead of referencing the original object
+        workout.value = { ...workoutToEdit };
+
+        // ✅ Map existing workout items to include `readOnly`, `selectedDuration`, and `selectedEquipment`
+        workoutItems.value = workoutToEdit.workoutItems.map((item: any) => ({
+            ...item,
+            readOnly: true, // Default to read-only when editing
+            selectedDuration: item.selectedDuration || '',
+            selectedEquipment: item.selectedEquipment || [],
+        }));
+    } else {
+        isNew.value = true;
+        workoutItems.value = [];
+    }
+}, { immediate: true });
 
 const search = async (event: any) => {
     console.error('searching')
@@ -200,7 +233,10 @@ const removeExercise = (index: number) => {
     workoutItems.value.splice(index, 1);
 }
 const generateWorkout = async (index: number) => {
-    workoutItems.value[index].description = await workoutStore.generateWorkout(workoutItems.value[index].scoreType, selectedEquipment.value, selectedDuration.value)
+    workoutItems.value[index].description = await workoutStore.generateWorkout(
+        workoutItems.value[index].scoreType,
+        workoutItems.value[index].selectedEquipment,
+        workoutItems.value[index].selectedDuration)
 }
 
 
@@ -211,20 +247,19 @@ const hideDialog = () => {
 };
 
 const createWorkout = () => {
+    workout.value.workoutItems = workoutItems.value.filter((item) => item.type).map(({ readOnly, ...item }) => ({
+        ...item,
+        exercise: item.exercise ? item.exercise._id : null, // Extract the _id from the exercise object
+    }))
+    if (isNew.value) {
+        workoutStore.createWorkout(workout.value)
+    } else {
+        workoutStore.updateWorkout(workout.value)
+        emit("workoutUpdated", { ...workout.value, workoutItems: [...workoutItems.value] }); // Emit event
+    }
 
-    const workout = {
-        name: newWorkout.value.name,
-        date: newWorkout.value.date,
-        workoutItems: workoutItems.value.filter((item) => item.type).map(({ readOnly, ...item }) => ({
-            ...item,
-            exercise: item.exercise ? item.exercise._id : null, // Extract the _id from the exercise object
-        })),
-    };
-    console.log(workout)
-    workoutStore.createWorkout(workout)
-
-
-
+    if (!isNew.value) {
+    }
 }
 
 

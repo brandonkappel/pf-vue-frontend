@@ -4,11 +4,12 @@
         <WorkoutHolder :workout="workout" />
 
     </div>
-    <CreateWorkoutDialog :workout="workout" />
+    <CreateWorkoutDialog v-if="workoutStore.isCreateWorkoutDialogVisible" :workout="workout"
+        @workoutUpdated="updateWorkoutList" />
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, toRefs } from 'vue';
+import { onMounted, ref, toRefs, watch } from 'vue';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { useAppStateStore } from '@/stores/appStateStore';
 import CreateWorkoutDialog from '@/components/createWorkoutDialog.vue';
@@ -24,15 +25,26 @@ const props = defineProps({
         type: String
     }
 })
+const workout = computed(() => workoutStore.workout)
+
 
 onBeforeMount(async () => {
     if (props.id) {
         await workoutStore.getWorkout(props.id)
-        appStateStore.setHeaderTitle(workout.value.name)
     }
 });
 
-const workout = computed(() => workoutStore.workout)
+watch(workout, (newWorkout) => {
+    if (newWorkout?.name) {
+        appStateStore.setHeaderTitle(newWorkout.name);
+    }
+});
+
+
+const updateWorkoutList = (updatedWorkout: any) => {
+    // console.error('updated', updatedWorkout)
+    workoutStore.workout = updatedWorkout
+};
 
 </script>
   

@@ -3,7 +3,7 @@
         <h1>This is an about page</h1>
     </div> -->
     <DataViewList :items="workouts" targetRoute="workout" />
-    <CreateWorkoutDialog />
+    <CreateWorkoutDialog v-if="workoutStore.isCreateWorkoutDialogVisible" />
 </template>
 
 <script setup lang="ts">

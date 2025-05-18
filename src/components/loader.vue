@@ -6,7 +6,8 @@
 <template>
     <div class="global-loader">
         <!-- Customize your loader style here, e.g., spinner -->
-        <div class="spinner"></div>
+        <!-- <div class="spinner"></div> -->
+        <ProgressSpinner />
     </div>
 </template>
 

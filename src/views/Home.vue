@@ -2,7 +2,7 @@
 import TheWelcome from '../components/TheWelcome.vue'
 import { ref, onMounted } from 'vue';
 
-const exercises = ref([]);
+const exercises = ref([] as any);
 
 onMounted(async () => {
   try {

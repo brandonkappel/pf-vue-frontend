@@ -4,6 +4,7 @@
         {{ formatDate(workout.date) }}
 
     </div>
+    <Card></Card>
 
     <Card v-for="item in props.workout.workoutItems" class="mb-2">
         <template #title>{{ item.type }}</template>
@@ -35,7 +36,7 @@ const props = defineProps({
         required: true
     }
 });
-console.error('props', props.workout)
+// console.error('props', props.workout)
 </script>
   
 <style scoped>

@@ -31,6 +31,7 @@ declare module 'vue' {
     Menubar: typeof import('primevue/menubar')['default']
     Password: typeof import('primevue/password')['default']
     PasswordDialog: typeof import('./src/components/auth/passwordDialog.vue')['default']
+    ProgressSpinner: typeof import('primevue/progressspinner')['default']
     RadioButton: typeof import('primevue/radiobutton')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

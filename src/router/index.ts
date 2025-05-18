@@ -66,18 +66,30 @@ const router = createRouter({
   ]
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next('/login');
-  } else {
-    if (to.meta.title) {
-      const appStateStore = useAppStateStore();
-      const title = to.meta.title as string;
-      appStateStore.setHeaderTitle(title);
-    }
-    next();
+
+  // Ensure the authentication status is up to date
+  await authStore.autoAuthUser();
+
+  // If the user is already authenticated and tries to access the login page, redirect to home
+  if (to.name === 'login' && authStore.isAuthenticated) {
+    return next({ name: 'home' });
   }
+
+  // Redirect to login if the route requires authentication and the user isn't authenticated
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    return next('/login');
+  }
+
+  // Set dynamic header and browser tab titles
+  if (to.meta.title) {
+    const appStateStore = useAppStateStore();
+    appStateStore.setHeaderTitle(to.meta.title as string);
+    document.title = `${to.meta.title} - Progressional Fitness`; // Optional
+  }
+
+  next(); // Proceed to the route
 });
 
 export default router;
