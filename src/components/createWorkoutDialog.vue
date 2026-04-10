@@ -1,123 +1,265 @@
 <template>
-    <Dialog :visible="workoutStore.isCreateWorkoutDialogVisible" modal @update:visible="hideDialog"
-        :header="workout ? workout.name : 'New Workout'" :style="{ width: '75vw', height: '85%' }"
-        :breakpoints="{ '1199px': '85vw', '575px': '90vw' }" pt:mask:class="backdrop-blur-sm">
-        <div class="flex gap-3 mb-3 flex-wrap">
-            <FloatLabel variant="in">
-                <InputText id="name" v-model="workout.name" autocomplete="off" />
-                <label for="name">Workout Name</label>
-            </FloatLabel>
-            <FloatLabel variant="in">
-                <DatePicker v-model="workout.date" inputId="date" showIcon iconDisplay="input" />
-                <label for="date">Date</label>
-            </FloatLabel>
+  <Dialog
+    :visible="workoutStore.isCreateWorkoutDialogVisible"
+    modal
+    @update:visible="hideDialog"
+    :header="workout ? workout.name || 'New Workout' : 'New Workout'"
+    :style="{ width: '75vw', maxWidth: '720px' }"
+    :breakpoints="{ '1199px': '85vw', '575px': '95vw' }"
+    pt:mask:class="backdrop-blur-sm"
+  >
+    <div class="space-y-6 pb-20">
+
+      <!-- Name + Date -->
+      <section>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs font-bold tracking-widest uppercase text-surface-500 mb-2">Workout Name</p>
+            <InputText v-model="workout.name" placeholder="e.g. Monday Strength + Metcon" class="w-full" />
+          </div>
+          <div>
+            <p class="text-xs font-bold tracking-widest uppercase text-surface-500 mb-2">Date</p>
+            <DatePicker v-model="workout.date" inputId="date" showIcon iconDisplay="input" class="w-full" />
+          </div>
         </div>
-        <hr>
-        <div class="my-3 relative" v-for="(item, index) in workoutItems" :key="index">
-            <div class="mb-3 flex justify-between gap-3 flex-wrap">
-                <div class="w-full md:w-56" v-if="!item.readOnly">
-                    <FloatLabel class="w-full" variant="in">
-                        <Select v-model="item.type" inputId="workoutType" @change="typeChange(index)"
-                            :options="workoutTypes" optionLabel="" class="w-full" />
-                        <label for="workoutType">Workout Type</label>
-                    </FloatLabel>
+      </section>
+
+      <hr class="border-surface-200 dark:border-surface-700" />
+
+      <!-- Workout Items -->
+      <section class="space-y-4">
+        <div v-for="(item, index) in workoutItems" :key="index"
+          class="rounded-xl border-2 border-surface-200 dark:border-surface-700 overflow-hidden">
+
+          <!-- Item header -->
+          <div class="flex items-center justify-between px-4 py-3 bg-surface-50 dark:bg-surface-800">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded">
+                {{ String(index + 1).padStart(2, '0') }}
+              </span>
+              <span class="text-sm font-semibold text-surface-600 dark:text-surface-300">
+                {{ item.type || 'Select Type' }}
+                <span v-if="item.type === 'Strength' && item.exercise?.name"> — {{ item.exercise.name }}</span>
+                <span v-if="item.type === 'Metcon' && item.description"> — {{ item.description.slice(0, 40) }}...</span>
+              </span>
+            </div>
+            <div class="flex items-center gap-1">
+              <Button
+                v-if="item.type"
+                @click="toggleEdit(index)"
+                :label="item.readOnly ? 'Edit' : 'Done'"
+                :icon="item.readOnly ? 'pi pi-pencil' : 'pi pi-check'"
+                :severity="item.readOnly ? 'secondary' : 'success'"
+                size="small"
+                outlined
+              />
+              <Button
+                @click="removeExercise(index)"
+                icon="pi pi-trash"
+                severity="danger"
+                text
+                rounded
+                size="small"
+              />
+            </div>
+          </div>
+
+          <!-- Item body -->
+          <div v-if="!item.readOnly" class="px-4 py-4 space-y-4">
+
+            <!-- Type selector -->
+            <div>
+              <p class="text-xs font-bold tracking-widest uppercase text-surface-500 mb-2">Type</p>
+              <div class="flex gap-2 flex-wrap">
+                <button
+                  v-for="type in workoutTypes"
+                  :key="type"
+                  @click="item.type = type; typeChange(index)"
+                  :class="[
+                    'px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-all duration-150',
+                    item.type === type
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 text-surface-600 dark:text-surface-400 hover:border-surface-300'
+                  ]"
+                >{{ type }}</button>
+              </div>
+            </div>
+
+            <!-- STRENGTH -->
+            <div v-if="item.type === 'Strength'" class="space-y-4">
+              <div>
+                <p class="text-xs font-bold tracking-widest uppercase text-surface-500 mb-2">Exercise</p>
+                <AutoComplete
+                  v-model="item.exercise"
+                  @option-select="onSelectedExercise"
+                  dropdown
+                  optionLabel="name"
+                  :suggestions="exercises"
+                  @complete="search"
+                  class="w-full"
+                  placeholder="Search exercises..."
+                />
+              </div>
+              <div class="flex gap-4">
+                <div class="flex-1">
+                  <p class="text-xs font-bold tracking-widest uppercase text-surface-500 mb-2">Sets</p>
+                  <InputNumber v-model="item.sets" inputId="sets" mode="decimal" showButtons :min="0" :max="10" fluid />
                 </div>
-                <div v-if="!item.readOnly && item.type === 'Metcon'">
-                    <SelectButton v-model="metconType" :options="metconTypes" aria-labelledby="basic" />
+                <div class="flex-1">
+                  <p class="text-xs font-bold tracking-widest uppercase text-surface-500 mb-2">Reps</p>
+                  <InputNumber v-model="item.reps" inputId="reps" mode="decimal" showButtons :min="0" :max="50" fluid />
                 </div>
+              </div>
             </div>
 
             <!-- METCON -->
-            <div v-if="item.type === 'Metcon'">
-                <div v-if="metconType === 'Generated Workout'" class="flex flex-col gap-3 my-2">
-                    <div class="flex flex-wrap gap-2">
-                        <span>Equipment Available:</span>
-                        <div v-for="(equipment, index) in availableEquipment" :key="index">
-                            <Checkbox v-model="item.selectedEquipment" :disabled="item.readOnly" :inputId="equipment"
-                                name="dynamic" :value="equipment" />
-                            <label :for="equipment" class="ml-2">{{ equipment }}</label>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <span>Workout Type:</span>
-                        <div v-for="(type, index) in scoreTypes" :key="index">
-                            <RadioButton v-model="item.scoreType" :disabled="item.readOnly" :inputId="type" name="dynamic"
-                                :value="type" />
-                            <label :for="type" class="ml-2">{{ type }}</label>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <span>Duration:</span>
-                        <div v-for="(duration, index) in durations" :key="index">
-                            <RadioButton v-model="item.selectedDuration" :disabled="item.readOnly" :inputId="duration"
-                                name="dynamic" :value="duration" />
-                            <label :for="duration" class="ml-2">{{ duration }}</label>
-                        </div>
+            <div v-if="item.type === 'Metcon'" class="space-y-4">
 
-                    </div>
-
-                    <Button v-if="!item.readOnly" class="my-3" size="small" @click="generateWorkout(index)"
-                        label="Generate Workout"></Button>
-
+              <!-- Custom vs Generate -->
+              <div>
+                <p class="text-xs font-bold tracking-widest uppercase text-surface-500 mb-2">Build Method</p>
+                <div class="flex gap-2">
+                  <button
+                    v-for="mt in metconTypes"
+                    :key="mt"
+                    @click="metconType = mt"
+                    :class="[
+                      'px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-all duration-150',
+                      metconType === mt
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 text-surface-600 dark:text-surface-400 hover:border-surface-300'
+                    ]"
+                  >{{ mt }}</button>
                 </div>
-                <div class="mb-3">
-                    <FloatLabel variant="in">
-                        <Textarea id="description" :disabled="item.readOnly" v-model="item.description" rows="5"
-                            style="width: 100%;" autoResize />
-                        <label for="description">Description</label>
-                    </FloatLabel>
-                </div>
+              </div>
 
-                <div v-if="metconType === 'Custom Workout'" class="flex flex-wrap gap-3">
-                    <span>Score:</span>
-                    <div v-for="(type, index) in scoreTypes" :key="index">
-                        <RadioButton v-model="item.scoreType" :disabled="item.readOnly" :inputId="type" name="dynamic"
-                            :value="type" />
-                        <label :for="type" class="ml-2">{{ type }}</label>
-                    </div>
-
-                </div>
-            </div>
-            <!-- STRENGTH -->
-            <div v-if="item.type === 'Strength'" class="flex flex-wrap gap-3">
-                <FloatLabel variant="in">
-                    <AutoComplete v-model="item.exercise" @option-select="onSelectedExercise" dropdown optionLabel="name"
-                        :disabled="item.readOnly" :suggestions="exercises" @complete="search" />
-                    <!-- <InputText id="name" v-model="item.exercise" :disabled="item.readOnly" autocomplete="off" /> -->
-                    <label for="name">Exercise</label>
-                </FloatLabel>
-                <FloatLabel variant="in">
-                    <InputNumber v-model="item.sets" inputId="sets" mode="decimal" :disabled="item.readOnly" showButtons
-                        :min="0" :max="10" fluid />
-                    <label for="sets">Sets</label>
-                </FloatLabel>
-                <FloatLabel variant="in">
-                    <InputNumber v-model="item.reps" inputId="reps" mode="decimal" :disabled="item.readOnly" showButtons
-                        :min="0" :max="50" fluid />
-                    <label for="reps">Reps</label>
-                </FloatLabel>
-            </div>
-            <div class="flex justify-end mt-2">
-                <div v-if="item.type">
-                    <Button @click="toggleEdit(index)" :label="item.readOnly ? 'edit' : 'save'" size="small"
-                        severity="success" outlined aria-label="Cancel" />
-                </div>
+              <!-- Generate options -->
+              <div v-if="metconType === 'Generated Workout'" class="space-y-4">
                 <div>
-                    <Button @click="removeExercise(index)" icon="pi pi-trash" severity="danger" text rounded
-                        aria-label="Cancel" />
+                  <p class="text-xs font-bold tracking-widest uppercase text-surface-500 mb-2">Equipment</p>
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      v-for="eq in availableEquipment"
+                      :key="eq"
+                      @click="toggleEquipment(item, eq)"
+                      :class="[
+                        'px-3 py-1.5 rounded-lg border-2 text-sm font-semibold transition-all duration-150',
+                        item.selectedEquipment?.includes(eq)
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 text-surface-600 dark:text-surface-400 hover:border-surface-300'
+                      ]"
+                    >{{ eq }}</button>
+                  </div>
                 </div>
 
+                <div>
+                  <p class="text-xs font-bold tracking-widest uppercase text-surface-500 mb-2">Score Type</p>
+                  <div class="flex gap-2 flex-wrap">
+                    <button
+                      v-for="type in scoreTypes"
+                      :key="type"
+                      @click="item.scoreType = type"
+                      :class="[
+                        'px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-all duration-150',
+                        item.scoreType === type
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 text-surface-600 dark:text-surface-400 hover:border-surface-300'
+                      ]"
+                    >{{ type }}</button>
+                  </div>
+                </div>
+
+                <div>
+                  <p class="text-xs font-bold tracking-widest uppercase text-surface-500 mb-2">Duration</p>
+                  <div class="flex gap-2">
+                    <button
+                      v-for="d in durations"
+                      :key="d"
+                      @click="item.selectedDuration = d"
+                      :class="[
+                        'px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-all duration-150',
+                        item.selectedDuration === d
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 text-surface-600 dark:text-surface-400 hover:border-surface-300'
+                      ]"
+                    >{{ d }}</button>
+                  </div>
+                </div>
+
+                <Button
+                  @click="generateWorkout(index)"
+                  label="Generate Workout"
+                  icon="pi pi-bolt"
+                  class="w-full"
+                />
+              </div>
+
+              <!-- Custom score type -->
+              <div v-if="metconType === 'Custom Workout'">
+                <p class="text-xs font-bold tracking-widest uppercase text-surface-500 mb-2">Score Type</p>
+                <div class="flex gap-2 flex-wrap">
+                  <button
+                    v-for="type in scoreTypes"
+                    :key="type"
+                    @click="item.scoreType = type"
+                    :class="[
+                      'px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-all duration-150',
+                      item.scoreType === type
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 text-surface-600 dark:text-surface-400 hover:border-surface-300'
+                    ]"
+                  >{{ type }}</button>
+                </div>
+              </div>
+
+              <!-- Description -->
+              <div>
+                <p class="text-xs font-bold tracking-widest uppercase text-surface-500 mb-2">Description</p>
+                <Textarea v-model="item.description" rows="4" class="w-full" autoResize
+                  placeholder="e.g. 21-15-9 Thrusters (95/65) + Pull-ups" />
+              </div>
             </div>
+          </div>
 
-            <hr class="mt-2">
-        </div>
-        <Button class="my-3" label="Add Workout Item" @click="addItem"></Button>
-        <div class="fixed bottom-0 right-5">
-            <Button class="my-3 w-full" :label="isNew ? 'Create Workout' : 'Edit Workout'" @click="createWorkout"></Button>
+          <!-- Read-only summary -->
+          <div v-else-if="item.type" class="px-4 py-3 text-sm text-surface-500 dark:text-surface-400">
+            <template v-if="item.type === 'Strength'">
+              <span class="font-semibold text-surface-700 dark:text-surface-200">{{ item.exercise?.name || '—' }}</span>
+              {{ item.sets }} sets × {{ item.reps }} reps
+            </template>
+            <template v-else>
+              <span class="font-semibold text-primary">{{ item.scoreType || 'Metcon' }}</span>
+              <span v-if="item.description" class="ml-1">— {{ item.description.slice(0, 80) }}{{ item.description.length > 80 ? '...' : '' }}</span>
+            </template>
+          </div>
+
         </div>
 
-    </Dialog>
+        <Button
+          label="Add Workout Item"
+          icon="pi pi-plus"
+          severity="secondary"
+          outlined
+          class="w-full"
+          @click="addItem"
+        />
+      </section>
+    </div>
+
+    <!-- Footer -->
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <Button label="Cancel" severity="secondary" text @click="hideDialog" />
+        <Button
+          :label="isNew ? 'Create Workout' : 'Save Changes'"
+          icon="pi pi-check"
+          @click="createWorkout"
+        />
+      </div>
+    </template>
+  </Dialog>
 </template>
+
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import * as yup from 'yup';
@@ -140,17 +282,16 @@ const schema = yup.object({
     workoutName: yup.string().required('Workout Name is required'),
     date: yup.date().required('Date is required'),
 });
-// Setup form with Vee Validate
 const { defineField, handleSubmit, errors } = useForm({
     validationSchema: schema,
 });
 
-
 interface WorkoutItemWithReadOnly extends WorkoutItem {
     selectedDuration: ''
-    selectedEquipment: []
+    selectedEquipment: string[]
     readOnly: boolean;
 }
+
 const availableEquipment = ref(['Dumbbells', 'Barbell', 'Resistance Bands', 'Kettlebell', 'Bodyweight'])
 const metconTypes = ref(['Custom Workout', 'Generated Workout'])
 const workoutTypes = ref(['Strength', 'Metcon'])
@@ -164,33 +305,26 @@ const workout = ref({} as Workout)
 const exercises = ref<any>([])
 const workoutItems = ref<WorkoutItemWithReadOnly[]>([]);
 const isNew = ref(false)
-const emit = defineEmits(["workoutUpdated"]); // Declare event
+const emit = defineEmits(["workoutUpdated"]);
 
-
-// 🎯 Watch `props.workout` to detect when editing
 watch(() => props.workout, (workoutToEdit: any) => {
     if (workoutToEdit) {
-        console.error('edit:', workoutToEdit)
         isNew.value = false;
-
-        // ✅ Create a copy instead of referencing the original object
         workout.value = { ...workoutToEdit };
-
-        // ✅ Map existing workout items to include `readOnly`, `selectedDuration`, and `selectedEquipment`
         workoutItems.value = workoutToEdit.workoutItems.map((item: any) => ({
             ...item,
-            readOnly: true, // Default to read-only when editing
+            readOnly: true,
             selectedDuration: item.selectedDuration || '',
             selectedEquipment: item.selectedEquipment || [],
         }));
     } else {
         isNew.value = true;
         workoutItems.value = [];
+        workout.value = { date: new Date(), name: '' } as Workout;
     }
 }, { immediate: true });
 
 const search = async (event: any) => {
-    console.error('searching')
     if (event.query) {
         setTimeout(async () => {
             exercises.value = await workoutStore.getExercises(event.query)
@@ -200,17 +334,25 @@ const search = async (event: any) => {
     }
 }
 
+const toggleEquipment = (item: WorkoutItemWithReadOnly, eq: string) => {
+    if (!item.selectedEquipment) item.selectedEquipment = []
+    const idx = item.selectedEquipment.indexOf(eq)
+    if (idx === -1) {
+        item.selectedEquipment.push(eq)
+    } else {
+        item.selectedEquipment.splice(idx, 1)
+    }
+}
+
 const addItem = () => {
-    workoutItems.value.forEach(item => {
-        item.readOnly = true;
-    });
+    workoutItems.value.forEach(item => { item.readOnly = true; });
     const newWorkoutItem = {} as WorkoutItemWithReadOnly
     newWorkoutItem.readOnly = false
+    newWorkoutItem.selectedEquipment = []
     workoutItems.value.push(newWorkoutItem)
 }
 
 const typeChange = (index: number) => {
-    console.error(workoutItems)
     if (workoutItems.value[index]) {
         workoutItems.value[index].reps = 0
         workoutItems.value[index].sets = 0
@@ -219,19 +361,20 @@ const typeChange = (index: number) => {
         workoutItems.value[index].description = ''
     }
 }
+
 const onSelectedExercise = (exercise: any) => {
     const exerciseToSave = { exerciseId: exercise.value._id, exerciseName: exercise.value.name }
     workoutStore.saveRecentSearch(exerciseToSave)
 }
 
 const toggleEdit = (index: number) => {
-    // Toggle the readOnly property for the specific item
     workoutItems.value[index].readOnly = !workoutItems.value[index].readOnly;
 };
 
 const removeExercise = (index: number) => {
     workoutItems.value.splice(index, 1);
 }
+
 const generateWorkout = async (index: number) => {
     workoutItems.value[index].description = await workoutStore.generateWorkout(
         workoutItems.value[index].scoreType,
@@ -239,28 +382,25 @@ const generateWorkout = async (index: number) => {
         workoutItems.value[index].selectedDuration)
 }
 
-
 const hideDialog = () => {
     workoutItems.value = []
     workoutStore.showCreateWorkoutDialog()
-    // emit('update:visible', false);
 };
 
 const createWorkout = () => {
+    if (!workout.value.name?.trim()) {
+        const d = workout.value.date ? new Date(workout.value.date) : new Date();
+        workout.value.name = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+    }
     workout.value.workoutItems = workoutItems.value.filter((item) => item.type).map(({ readOnly, ...item }) => ({
         ...item,
-        exercise: item.exercise ? item.exercise._id : null, // Extract the _id from the exercise object
+        exercise: item.exercise ? item.exercise._id : null,
     }))
     if (isNew.value) {
         workoutStore.createWorkout(workout.value)
     } else {
         workoutStore.updateWorkout(workout.value)
-        emit("workoutUpdated", { ...workout.value, workoutItems: [...workoutItems.value] }); // Emit event
-    }
-
-    if (!isNew.value) {
+        emit("workoutUpdated", { ...workout.value, workoutItems: [...workoutItems.value] });
     }
 }
-
-
 </script>

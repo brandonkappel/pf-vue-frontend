@@ -1,72 +1,82 @@
 <template>
-  <Menubar>
-    <template #start>
-      <!-- Toggle Button for Mobile -->
-      <div class="h-10 flex items-center">
-        <div class="mx-2">
-          <button @click="toggleMenu" text class=" p-2  lg:hidden z-50">
-            <i :class="isMenuVisible ? 'pi pi-times' : 'pi pi-bars'"></i>
-          </button>
-        </div>
-        <span class="text-xl font-semibold">Progressional</span>
-        <span class="text-xl font-semibold text-primary">Fitness</span>
-      </div>
+  <div class="flex flex-col h-screen bg-surface-50 dark:bg-surface-950">
+    <div class="flex flex-1 overflow-hidden">
 
-    </template>
-  </Menubar>
-  <div class="flex h-screen">
-    <!-- Side Menu -->
-    <div :class="[
-      'fixed top-0 left-0 h-full shadow-md transition-transform duration-300 z-40',
-      { '-translate-x-full': !isMenuVisible, 'translate-x-0': isMenuVisible },
-      'lg:relative lg:translate-x-0 lg:w-32'
-    ]">
-      <Menu :model="items" class="w-full h-full">
-        <!-- Menu Header -->
-        <template #start v-if="isMenuVisible">
-          <div class="flex justify-center h-16 w-full">
-            <span class="inline-flex flex-col items-center px-2 py-2">
-              <!-- Uncomment and add SVG if needed -->
-              <!-- <svg width="35" height="40" viewBox="0 0 35 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-8"></svg> -->
-              <span class="text-xl font-semibold">Progressional</span>
-              <span class="text-xl font-semibold text-primary">Fitness</span>
-            </span>
+      <!-- Sidebar (desktop only) -->
+      <aside class="hidden lg:flex flex-col w-56 shrink-0 border-r border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900">
+        <div class="flex items-center gap-2 h-16 px-5 border-b border-surface-200 dark:border-surface-800 shrink-0">
+          <i class="pi pi-bolt text-primary text-lg"></i>
+          <div class="leading-tight">
+            <span class="font-bold text-sm">Progressional</span>
+            <span class="font-bold text-sm text-primary"> Fitness</span>
           </div>
-        </template>
+        </div>
 
-        <!-- Item Template -->
-        <template #item="{ item }">
-          <router-link :to="item.to"
-            class="flex flex-col items-center p-2 hover:bg-surface-100 dark:hover:bg-surface-800 rounded transition-colors duration-200">
-            <i :class="`pi ${item.icon} mr-2`" />
+        <nav class="flex-1 py-4 px-3 flex flex-col gap-1 overflow-y-auto">
+          <router-link
+            v-for="item in navItems"
+            :key="item.to"
+            :to="item.to"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-100 transition-colors duration-200"
+            active-class="bg-primary/10 !text-primary font-semibold"
+          >
+            <i :class="`pi ${item.icon} text-base w-4 text-center`"></i>
             <span>{{ item.label }}</span>
           </router-link>
-        </template>
+        </nav>
 
-      </Menu>
-    </div>
+        <div class="px-3 py-4 border-t border-surface-200 dark:border-surface-800 shrink-0">
+          <button
+            @click="handleLogout"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-sm text-surface-600 dark:text-surface-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 transition-colors duration-200"
+          >
+            <i class="pi pi-sign-out text-base w-4 text-center"></i>
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
 
-    <!-- Main Content Area with Router View -->
-    <div class="flex-1 overflow-auto ">
-      <div class="px-4">
+      <!-- Main content -->
+      <div class="flex-1 flex flex-col overflow-hidden">
         <Header />
+        <Loader v-if="appStateStore.isLoading" />
+        <main class="flex-1 overflow-auto p-4 pb-24 lg:pb-4">
+          <router-view v-slot="{ Component }">
+            <Transition name="page" mode="out-in">
+              <component :is="Component" :key="$route.fullPath" />
+            </Transition>
+          </router-view>
+        </main>
       </div>
-      <Loader v-if="appStateStore.isLoading" />
 
-      <div class="p-4">
-        <router-view />
-      </div>
     </div>
 
-    <!-- Overlay for Mobile -->
-    <div v-if="isMenuVisible" @click="toggleMenu" class="fixed inset-0 bg-black bg-opacity-50 lg:hidden z-30"></div>
+    <!-- Bottom tab bar (mobile only) -->
+    <nav class="fixed bottom-0 left-0 right-0 lg:hidden flex items-stretch border-t border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 z-40">
+      <router-link
+        v-for="item in navItems"
+        :key="item.to"
+        :to="item.to"
+        class="flex-1 flex flex-col items-center justify-center py-3 gap-1 text-xs text-surface-400 dark:text-surface-500 transition-colors duration-200"
+        active-class="!text-primary"
+      >
+        <i :class="`pi ${item.icon} text-xl`"></i>
+        <span>{{ item.label }}</span>
+      </router-link>
+      <button
+        @click="handleLogout"
+        class="flex-1 flex flex-col items-center justify-center py-3 gap-1 text-xs text-surface-400 dark:text-surface-500 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200"
+      >
+        <i class="pi pi-sign-out text-xl"></i>
+        <span>Logout</span>
+      </button>
+    </nav>
 
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import Menu from "primevue/menu";
+import { useRouter } from "vue-router";
 import { useAuthStore } from '@/stores/auth'
 import { useAppStateStore } from '@/stores/appStateStore'
 import Header from '@/components/header.vue';
@@ -74,58 +84,33 @@ import Loader from '@/components/loader.vue';
 
 const authStore = useAuthStore()
 const appStateStore = useAppStateStore()
-const isMenuVisible = ref(false)
+const router = useRouter()
 
+const navItems = [
+  { label: 'Home', icon: 'pi-home', to: '/home' },
+  { label: 'Workouts', icon: 'pi-bolt', to: '/my-workouts' },
+  { label: 'Programs', icon: 'pi-list-check', to: '/programs' },
+  { label: 'Skill Lab', icon: 'pi-star', to: '/skill-builder' },
+]
 
-const items = ref([
-  // { separator: true },
-  {
-    items: [
-      { label: 'Home', icon: 'pi pi-home', to: '/home' },
-      { label: 'My Workouts', icon: 'pi pi-bolt', to: '/my-workouts' },
-      { label: 'Programs', icon: 'pi pi-bolt', to: '/programs' },
-      // { label: 'Favorites', icon: 'pi pi-heart', },
-      // { label: 'Programs', icon: 'pi pi-list-check', },
-      // { label: 'Clients', icon: 'pi pi-users', badge: 2, },
-      // { label: 'Admin', icon: 'pi pi-shield', },
-      // { label: 'Settings', icon: 'pi pi-cog', },
-      {
-        label: 'Logout', icon: 'pi pi-sign-out', to: '/login',
-        command: () => {
-          authStore.logout()
-        }
-      }
-    ]
-  },
-  // { separator: true }
-]);
-const toggleMenu = () => {
-  isMenuVisible.value = !isMenuVisible.value;
-};
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/login')
+}
 </script>
 
 <style scoped>
-.card {
-  /* Custom styles for the menu card */
-  /* max-height: 100vh; */
-  /* Ensure full height menu */
+.page-enter-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
-
-/* Optional: Adjust menu width */
-.card {
-  /* width: 32px; */
-  /* Collapsed width on larger screens */
+.page-leave-active {
+  transition: none;
 }
-
-::v-deep(.p-menu) {
-  min-width: auto !important;
-  ;
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(5px);
 }
-
-@media (min-width: 1024px) {
-  .card {
-    /* width: 16rem; */
-    /* Expanded width on larger screens */
-  }
+.page-leave-to {
+  opacity: 0;
 }
 </style>

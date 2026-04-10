@@ -1,60 +1,55 @@
 <template>
-    <div v-if="workout">
-        <h1>{{ workout.name }}</h1>
-        <WorkoutHolder :workout="workout" />
+  <div class="max-w-2xl mx-auto space-y-6 pb-32 lg:pb-8">
+    <div v-if="workout?._id">
+      <!-- Header -->
+      <div class="flex items-start justify-between gap-4 flex-wrap mb-6">
+        <div>
+          <h1 class="text-xl font-bold text-surface-800 dark:text-surface-100">{{ workout.name }}</h1>
+          <p class="text-sm text-surface-400 mt-0.5">{{ formatDate(workout.date) }}</p>
+        </div>
+      </div>
 
+      <WorkoutHolder />
     </div>
     <CreateWorkoutDialog v-if="workoutStore.isCreateWorkoutDialogVisible" :workout="workout"
-        @workoutUpdated="updateWorkoutList" />
+      @workoutUpdated="updateWorkoutList" />
+
+    <!-- Edit FAB -->
+    <Button @click="workoutStore.showCreateWorkoutDialog()" icon="pi pi-pencil" rounded
+      class="!fixed bottom-24 right-5 lg:bottom-6 !w-14 !h-14 shadow-xl z-30" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, toRefs, watch } from 'vue';
-import { useWorkoutStore } from '@/stores/workoutStore';
-import { useAppStateStore } from '@/stores/appStateStore';
-import CreateWorkoutDialog from '@/components/createWorkoutDialog.vue';
+import { watch, computed, onBeforeMount, onUnmounted } from 'vue'
+import { useWorkoutStore } from '@/stores/workoutStore'
+import { useAppStateStore } from '@/stores/appStateStore'
+import { formatDate } from '@/shared/formatter'
+import CreateWorkoutDialog from '@/components/createWorkoutDialog.vue'
 import WorkoutHolder from '@/components/workoutHolder.vue'
-import { computed } from 'vue';
-import { onBeforeMount } from 'vue';
 
 const workoutStore = useWorkoutStore()
 const appStateStore = useAppStateStore()
 
 const props = defineProps({
-    id: {
-        type: String
-    }
+  id: { type: String }
 })
+
 const workout = computed(() => workoutStore.workout)
 
-
 onBeforeMount(async () => {
-    if (props.id) {
-        await workoutStore.getWorkout(props.id)
-    }
-});
+  if (props.id) await workoutStore.getWorkout(props.id)
+})
 
-watch(workout, (newWorkout) => {
-    if (newWorkout?.name) {
-        appStateStore.setHeaderTitle(newWorkout.name);
-    }
-});
+watch(workout, (w) => {
+  if (w?.name) appStateStore.setHeaderTitle(w.name)
+})
 
+onUnmounted(() => {
+  appStateStore.setHeaderTitle('')
+})
 
 const updateWorkoutList = (updatedWorkout: any) => {
-    // console.error('updated', updatedWorkout)
-    workoutStore.workout = updatedWorkout
-};
-
-</script>
-  
-<style>
-@media (min-width: 1024px) {
-    .about {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-    }
+  workoutStore.workout = updatedWorkout
 }
-</style>
-  
+</script>

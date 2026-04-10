@@ -1,4 +1,5 @@
 export interface WorkoutItem {
+  _id: string;
   name: string;
   description: string;
   comments: string;

@@ -16,7 +16,7 @@ export const useWorkoutStore = defineStore('workout', () => {
 
   async function getWorkouts() {
     try {
-      const response = await axiosInstance.get(`/workouts/workouts/${userId.value}`);
+      const response = await axiosInstance.get(`/workouts/${userId.value}`);
       workouts.value = response.data.workouts;
     } catch (error) {
       console.error(error);
@@ -26,7 +26,8 @@ export const useWorkoutStore = defineStore('workout', () => {
   async function getWorkout(workoutId: string) {
     try {
       workout.value = {} as Workout;
-      const response = await axiosInstance.get(`/workouts/${workoutId}`);
+      const response = await axiosInstance.get(`/workouts/workout/${workoutId}`);
+      console.log('getWorkout response', response.data);
       workout.value = response.data;
     } catch (error) {
       console.error(error);
@@ -51,6 +52,33 @@ export const useWorkoutStore = defineStore('workout', () => {
       isCreateWorkoutDialogVisible.value = !isCreateWorkoutDialogVisible.value;
     } catch (err) {
       console.error(err);
+    }
+  }
+
+  async function saveItemResult(
+    workoutId: string,
+    payload: {
+      workoutItemId: string;
+      exercise?: string | null;
+      customExercise?: string | null;
+      setsResults: {
+        setNumber: number;
+        reps?: number | null;
+        weight?: number | null;
+        time?: number | null;
+        scale?: string;
+        extraReps?: number | null;
+      }[];
+      rpe?: number | null;
+      notes?: string;
+    }
+  ) {
+    console.log('Saving item result with payload:', payload);
+    try {
+      await axiosInstance.patch(`workouts/${workoutId}/item-result`, payload);
+    } catch (err) {
+      console.error(err);
+      throw err;
     }
   }
 
@@ -102,6 +130,47 @@ export const useWorkoutStore = defineStore('workout', () => {
     }
   }
 
+  async function refineSkillProgram(payload: {
+    previousProgram: string;
+    adjustmentNotes: string;
+    movement: string;
+    levelTag: string;
+    levelDesc: string;
+    weeks: number;
+    daysPerWeek: number;
+    timing: string;
+  }) {
+    const response = await axiosInstance.post('/skillBuilder/refine', payload, {
+      headers: { skipLoading: true }
+    });
+    const data = response.data;
+    return typeof data === 'string' ? JSON.parse(data) : data;
+  }
+
+  async function generateSkillProgram(payload: {
+    category: string;
+    movement: string;
+    levelTag: string;
+    levelDesc: string;
+    weeks: number;
+    daysPerWeek: number;
+    timing: string;
+    context: string;
+  }) {
+    console.log('Generating skill program with payload:', payload);
+
+    try {
+      const response = await axiosInstance.post('/skillBuilder/generate', payload, {
+        headers: { skipLoading: true }
+      });
+      const data = response.data;
+      return typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
   function showCreateWorkoutDialog() {
     isCreateWorkoutDialogVisible.value = !isCreateWorkoutDialogVisible.value;
   }
@@ -120,6 +189,9 @@ export const useWorkoutStore = defineStore('workout', () => {
     saveRecentSearch,
     getRecentlySearched,
     generateWorkout,
+    generateSkillProgram,
+    refineSkillProgram,
+    saveItemResult,
     showCreateWorkoutDialog
   };
 });
