@@ -39,17 +39,15 @@
         >
           <router-link
             :to="{ name: 'skillProgram', params: { id: sp._id } }"
-            class="flex items-center py-4 px-2 hover:bg-gray-200 dark:hover:bg-slate-800 cursor-pointer"
+            class="flex items-center gap-3 py-4 px-2 hover:bg-gray-200 dark:hover:bg-slate-800 cursor-pointer"
           >
-            <div class="text-surface-500 dark:text-surface-300 w-6/12 md:w-4/12 font-medium text-sm">
-              {{ sp.movement }}
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-sm text-surface-700 dark:text-surface-300 truncate">{{ sp.movement }}</div>
+              <div class="text-xs text-surface-400 dark:text-surface-500 mt-0.5">
+                {{ sp.levelTag }} &bull; {{ sp.weeks }} wks &bull; {{ sp.daysPerWeek }}×/wk &bull; {{ sp.timing }}
+              </div>
             </div>
-            <div class="hidden md:block text-surface-400 dark:text-surface-400 w-6/12 text-xs">
-              {{ sp.levelTag }} &bull; {{ sp.weeks }} wks &bull; {{ sp.daysPerWeek }}×/wk &bull; {{ sp.timing }}
-            </div>
-            <div class="w-6/12 md:w-2/12 flex justify-end">
-              <Button icon="pi pi-angle-right" text />
-            </div>
+            <Button icon="pi pi-angle-right" text class="shrink-0" />
           </router-link>
         </div>
       </div>

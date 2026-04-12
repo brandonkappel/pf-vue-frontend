@@ -1,5 +1,25 @@
 <template>
-  <div class="max-w-2xl mx-auto space-y-8 pb-32 lg:pb-8">
+  <div class="space-y-4">
+
+    <!-- Tab switcher -->
+    <div class="flex gap-2 border-b border-surface-200 dark:border-surface-700">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        @click="onTabChange(tab.id)"
+        :class="[
+          'px-4 py-2 text-sm font-semibold tracking-wide border-b-2 -mb-px transition-colors duration-150',
+          activeTab === tab.id
+            ? 'border-primary text-primary'
+            : 'border-transparent text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
+        ]"
+      >
+        {{ tab.label }}
+      </button>
+    </div>
+
+    <!-- Build tab -->
+    <div v-if="activeTab === 'build'" class="max-w-2xl mx-auto space-y-8 pb-32 lg:pb-8">
 
     <!-- Step 1: Category -->
     <section>
@@ -156,24 +176,81 @@
       </section>
     </div>
 
+    </div><!-- end build tab -->
+
+    <!-- My Programs tab -->
+    <div v-if="activeTab === 'my-programs'">
+      <div v-if="loadingSkill" class="flex justify-center py-12">
+        <i class="pi pi-spin pi-spinner text-2xl text-primary" />
+      </div>
+      <div v-else-if="skillPrograms.length === 0" class="text-center py-12 text-surface-400 text-sm">
+        No Skill Lab programs yet. Switch to the Build tab to create one.
+      </div>
+      <div v-else class="card rounded-lg">
+        <div
+          v-for="(sp, index) in skillPrograms"
+          :key="sp._id"
+          :class="{ 'border-t border-surface-200 dark:border-surface-700': index !== 0 }"
+        >
+          <router-link
+            :to="{ name: 'skillProgram', params: { id: sp._id } }"
+            class="flex items-center gap-3 py-4 px-2 hover:bg-gray-200 dark:hover:bg-slate-800 cursor-pointer"
+          >
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-sm text-surface-700 dark:text-surface-300 truncate">{{ sp.movement }}</div>
+              <div class="text-xs text-surface-400 dark:text-surface-500 mt-0.5">
+                {{ sp.levelTag }} &bull; {{ sp.weeks }} wks &bull; {{ sp.daysPerWeek }}×/wk &bull; {{ sp.timing }}
+              </div>
+            </div>
+            <Button icon="pi pi-angle-right" text class="shrink-0" />
+          </router-link>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useWorkoutStore } from '@/stores/workoutStore'
 import { useSkillProgramStore } from '@/stores/skillProgramStore'
 import { useAppStateStore } from '@/stores/appStateStore'
-import type { SkillProgramData } from '@/stores/skillProgramStore'
+import type { SkillProgramData, SavedSkillProgram } from '@/stores/skillProgramStore'
 import SkillProgramCard from '@/components/SkillProgramCard.vue'
 
+const route = useRoute()
 const workoutStore = useWorkoutStore()
 const skillProgramStore = useSkillProgramStore()
 const appStateStore = useAppStateStore()
 
-onMounted(() => {
+onMounted(async () => {
   appStateStore.setHeaderTitle('Skill Lab')
+  if (route.query.tab === 'my-programs') {
+    await onTabChange('my-programs')
+  }
 })
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+const tabs = [
+  { id: 'build', label: 'Build' },
+  { id: 'my-programs', label: 'My Programs' },
+]
+
+const activeTab = ref('build')
+const skillPrograms = ref<SavedSkillProgram[]>([])
+const loadingSkill = ref(false)
+
+const onTabChange = async (tabId: string) => {
+  activeTab.value = tabId
+  if (tabId === 'my-programs' && skillPrograms.value.length === 0) {
+    loadingSkill.value = true
+    skillPrograms.value = await skillProgramStore.getSkillPrograms()
+    loadingSkill.value = false
+  }
+}
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
