@@ -139,6 +139,7 @@ export const useWorkoutStore = defineStore('workout', () => {
     weeks: number;
     daysPerWeek: number;
     timing: string;
+    sessionLength: number;
   }) {
     const response = await axiosInstance.post('/skillBuilder/refine', payload, {
       headers: { skipLoading: true }
@@ -153,6 +154,7 @@ export const useWorkoutStore = defineStore('workout', () => {
     levelTag: string;
     levelDesc: string;
     weeks: number;
+    sessionLength: number;
     daysPerWeek: number;
     timing: string;
     context: string;
@@ -164,7 +166,13 @@ export const useWorkoutStore = defineStore('workout', () => {
         headers: { skipLoading: true }
       });
       const data = response.data;
-      return typeof data === 'string' ? JSON.parse(data) : data;
+      try {
+        return typeof data === 'string' ? JSON.parse(data) : data;
+      } catch {
+        throw new Error(
+          'The generated program was too large. Try fewer weeks or sessions per week.'
+        );
+      }
     } catch (error) {
       console.error(error);
       throw error;
