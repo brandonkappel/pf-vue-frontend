@@ -74,7 +74,7 @@
       <div class="rounded-xl border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900">
         <div class="flex items-center justify-between px-4 pt-4 pb-3 border-b border-surface-100 dark:border-surface-800">
           <p class="text-xs font-bold tracking-widest uppercase text-surface-500">Skill Programs</p>
-          <router-link to="/programs" class="text-xs text-primary font-semibold hover:underline">View all</router-link>
+          <router-link :to="{ name: 'skillBuilder', query: { tab: 'my-programs' } }" class="text-xs text-primary font-semibold hover:underline">View all</router-link>
         </div>
 
         <div v-if="loadingSkill" class="flex justify-center py-8">
